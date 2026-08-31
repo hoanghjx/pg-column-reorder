@@ -19,6 +19,8 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = { version = "2", features = [] }
 tokio = { version = "1", features = ["sync", "rt"] }
+native-tls = "0.2"
+postgres-native-tls = "0.5"
 tokio-postgres = "0.7"
 
 [features]

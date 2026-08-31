@@ -4,3 +4,4 @@ src-tauri/target/
 .env
 npm-debug.log*
 *.exe
+.codegraph

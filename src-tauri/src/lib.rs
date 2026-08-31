@@ -1,9 +1,11 @@
+use native_tls::TlsConnector;
+use postgres_native_tls::MakeTlsConnector;
 use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use tauri::State;
 use tokio::sync::Mutex;
-use tokio_postgres::{Client, NoTls, Row};
+use tokio_postgres::{Client, Row};
 
 struct DatabaseState(Mutex<Option<Client>>);
 
@@ -853,7 +855,11 @@ async fn connect_database(
     connection_string: String,
     state: State<'_, DatabaseState>,
 ) -> Result<Vec<TableRef>, String> {
-    let (client, connection) = tokio_postgres::connect(&connection_string, NoTls)
+    let tls = TlsConnector::builder()
+        .build()
+        .map(MakeTlsConnector::new)
+        .map_err(|error| error.to_string())?;
+    let (client, connection) = tokio_postgres::connect(&connection_string, tls)
         .await
         .map_err(|error| error.to_string())?;
     tauri::async_runtime::spawn(async move {

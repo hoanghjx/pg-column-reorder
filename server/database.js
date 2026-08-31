@@ -19,7 +19,12 @@ const formatBytes = (value) => {
 export async function connect(connectionString) {
   const url = new URL(connectionString)
   if (process.env.DOCKERIZED === 'true' && ['localhost', '127.0.0.1'].includes(url.hostname)) url.hostname = 'host.docker.internal'
-  const client = new Client({ connectionString: url.toString(), application_name: 'pg-column-reorder' })
+  const sslMode = url.searchParams.get('sslmode')
+  const ssl = ['require', 'verify-ca', 'verify-full'].includes(sslMode)
+    ? { rejectUnauthorized: false }
+    : undefined
+  if (ssl) url.searchParams.delete('sslmode')
+  const client = new Client({ connectionString: url.toString(), application_name: 'pg-column-reorder', ssl })
   await client.connect()
   return client
 }
