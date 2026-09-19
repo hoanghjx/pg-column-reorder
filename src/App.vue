@@ -64,6 +64,7 @@ const filteredTables = computed(() => {
   return needle ? tables.value.filter((item) => `${item.schema}.${item.table}`.toLowerCase().includes(needle)) : tables.value
 })
 const groupedTables = computed(() => groupBy(orderBy(filteredTables.value, ['schema', 'table']), 'schema'))
+const columnKey = (column: ColumnMetadata) => `${column.number}:${column.name}`
 const currentOrder = computed(() => columns.value.map((column) => column.name))
 const changed = computed(() => currentOrder.value.some((name, index) => name !== originalOrder.value[index]))
 const canApply = computed(() => Boolean(current.value && !current.value.blockers.length && changed.value && !busy.value))
@@ -393,9 +394,9 @@ async function apply() {
             <ol ref="columnsElement" class="divide-y">
               <li
                 v-for="column in columns"
-                :key="column.name"
+                :key="columnKey(column)"
                 :class="['grid min-h-12 grid-cols-[32px_minmax(120px,1fr)_minmax(180px,auto)] items-center gap-2 px-3 text-sm transition-colors', selected.includes(column.name) && 'bg-accent']"
-                :data-id="column.name"
+                :data-id="columnKey(column)"
                 @click="editing !== column.name && toggleSelection(column.name)"
               >
                 <button class="drag-handle flex size-8 cursor-grab items-center justify-center text-muted-foreground active:cursor-grabbing" title="Kéo để đổi vị trí" @click.stop>

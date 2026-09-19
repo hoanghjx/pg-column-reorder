@@ -62,7 +62,7 @@ export async function inspectTable(client, schema, table) {
   const rel = relation.rows[0]
 
   const columns = await client.query(`
-    SELECT a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type,
+    SELECT a.attnum AS number, a.attname AS name, format_type(a.atttypid, a.atttypmod) AS type,
            a.attnotnull AS not_null, a.attidentity AS identity, a.attgenerated AS generated,
            pg_get_expr(d.adbin, d.adrelid) AS default_expr,
            col_description(a.attrelid, a.attnum) AS comment,
@@ -81,11 +81,18 @@ export async function inspectTable(client, schema, table) {
     FROM pg_attribute a
     JOIN pg_type t ON t.oid = a.atttypid
     LEFT JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
-    LEFT JOIN pg_depend sd ON sd.refclassid = 'pg_class'::regclass
-      AND sd.classid = 'pg_class'::regclass
-      AND sd.refobjid = a.attrelid AND sd.refobjsubid = a.attnum
-      AND sd.deptype IN ('i', 'a')
-    LEFT JOIN pg_class seq ON seq.oid = sd.objid AND seq.relkind = 'S'
+    LEFT JOIN LATERAL (
+      SELECT depend.objid, depend.deptype
+      FROM pg_depend depend
+      JOIN pg_class candidate ON candidate.oid = depend.objid AND candidate.relkind = 'S'
+      WHERE depend.refclassid = 'pg_class'::regclass
+        AND depend.classid = 'pg_class'::regclass
+        AND depend.refobjid = a.attrelid AND depend.refobjsubid = a.attnum
+        AND depend.deptype IN ('i', 'a')
+      ORDER BY depend.deptype
+      LIMIT 1
+    ) sd ON true
+    LEFT JOIN pg_class seq ON seq.oid = sd.objid
     LEFT JOIN pg_namespace seq_ns ON seq_ns.oid = seq.relnamespace
     LEFT JOIN pg_sequences ps ON ps.schemaname = seq_ns.nspname AND ps.sequencename = seq.relname
     WHERE a.attrelid = $1 AND a.attnum > 0 AND NOT a.attisdropped

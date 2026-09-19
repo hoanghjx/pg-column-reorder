@@ -4,6 +4,7 @@ export interface TableRef {
 }
 
 export interface ColumnMetadata {
+  number: number
   name: string
   type: string
   not_null: boolean
