@@ -1,27 +1,13 @@
 services:
   app:
     build: .
-    container_name: pgreorder_app
     environment:
       DOCKERIZED: "true"
       HOST: 0.0.0.0
       PORT: 3210
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - local-proxy
+    ports:
+      - "3210:3210"
     restart: unless-stopped
-    labels:
-      traefik.enable: "true"
-      traefik.docker.network: local-proxy
-      traefik.http.middlewares.pgreorder-https-redirect.redirectscheme.scheme: https
-      traefik.http.routers.pgreorder-http.entrypoints: web
-      traefik.http.routers.pgreorder-http.middlewares: pgreorder-https-redirect
-      traefik.http.routers.pgreorder-http.rule: Host(`pgreorder.dev`)
-      traefik.http.routers.pgreorder.entrypoints: websecure
-      traefik.http.routers.pgreorder.rule: Host(`pgreorder.dev`)
-      traefik.http.routers.pgreorder.tls: "true"
-      traefik.http.services.pgreorder.loadbalancer.server.port: "3210"
 
   postgres:
     image: postgres:18-alpine
@@ -40,8 +26,3 @@ services:
       retries: 20
     profiles:
       - test
-
-networks:
-  local-proxy:
-    external: true
-    name: local-proxy
